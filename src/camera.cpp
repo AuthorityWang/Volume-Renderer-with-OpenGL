@@ -1,8 +1,7 @@
 #include <camera.h>
 #include <utils.h>
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM), keySensitivity(KEYSENSITIVITY)
-{
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM), keySensitivity(KEYSENSITIVITY) {
     Position = position;
     WorldUp = up;
     Yaw = yaw;
@@ -10,8 +9,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front
     updateCameraVectors();
 }
 
-Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
-{
+Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM) {
     Position = glm::vec3(posX, posY, posZ);
     WorldUp = glm::vec3(upX, upY, upZ);
     Yaw = yaw;
@@ -19,13 +17,11 @@ Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float u
     updateCameraVectors();
 }
 
-glm::mat4 Camera::GetViewMatrix()
-{
+glm::mat4 Camera::GetViewMatrix() {
     return glm::lookAt(Position, Position + Front, Up);
 }
 
-void Camera::ProcessKeyboard(Camera_Movement direction)
-{
+void Camera::ProcessKeyboard(Camera_Movement direction) {
     if (direction == FORWARD)
         Position += Front * KEYSENSITIVITY;
     if (direction == BACKWARD)
@@ -40,8 +36,7 @@ void Camera::ProcessKeyboard(Camera_Movement direction)
         Position -= Up * KEYSENSITIVITY;
 }
 
-void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch, GLboolean constrainYaw)
-{
+void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch, GLboolean constrainYaw) {
     xoffset *= MouseSensitivity;
     yoffset *= MouseSensitivity;
 
@@ -59,8 +54,7 @@ void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constr
     updateCameraVectors();
 }
 
-void Camera::ProcessMouseScroll(float yoffset)
-{
+void Camera::ProcessMouseScroll(float yoffset) {
     Zoom -= (float)yoffset;
     if (Zoom < 1.0f)
         Zoom = 1.0f;
