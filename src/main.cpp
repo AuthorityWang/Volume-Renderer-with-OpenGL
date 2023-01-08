@@ -99,6 +99,16 @@ int main() {
         // view matrix
         glm::mat4 view = camera.GetViewMatrix();
         glShader.setMat4("view", view);
+
+        glShader.setMat4("ViewMatrix", view);
+        glShader.setFloat("focal_length", 5.0f);
+        glShader.setFloat("aspect_ratio", (float)WIDTH / (float)HEIGHT);
+        glShader.setVec2("viewport_size", vec2(1.0, 1.0));
+        glShader.setVec3("ray_origin", vec3(0.5, 0.5, 5.0));
+        glShader.setVec3("upp_bnd", vec3(1.0, 1.0, 1.0));
+        glShader.setVec3("low_bnd", vec3(0.0, 0.0, 0.0));
+        glShader.setVec3("background_colour", vec3(1.0f, 1.0f, 1.0f));
+        glShader.setFloat("step_size", 0.001);
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_1D, TfTexture);
@@ -106,11 +116,10 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_3D, RawTexture);
 
-        //draw
-        // glBindVertexArray(VAO);
-        // glDrawArrays(GL_TRIANGLES, 0, 36);
-        // glBindVertexArray(0);
+        glShader.setInt("TranFunc", 0);
+        glShader.setInt("volume", 1);
 
+        // only draw the front visible faces to faster
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glBindVertexArray(VAO);
