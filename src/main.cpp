@@ -1,6 +1,8 @@
 #include <utils.h>
 #include <shader.h>
 #include <camera.h>
+#include <functionloader.h>
+#include <dataloader.h>
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -14,7 +16,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void keyboard_callback(GLFWwindow* window);
 
-Camera camera(glm::vec3(0.0f, 0.0f, 1.0f));
+Camera camera(glm::vec3(0.5f, 0.5f, 5.0f));
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -26,77 +28,61 @@ GLFWwindow *window;
 int main() {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    // glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glEnable(GL_DEPTH_TEST);
 
     // init a shader
     Shader glShader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
-    /// init two loader, if not work, try to use smart pointer
-    // dataloader loader("...");
-    // functionloader loader("...");
-    // Mesh mesh(loader, loader);
 
     // first write a mesh without transfer function and rawdata, just a cube
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    float vertices[24] = {
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 1.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 1.0
     };
-    unsigned int VBO, VAO;
+    int indices[36] = {
+        1,5,7,7,3,1,
+        0,2,6,6,4,0,
+        0,1,3,3,2,0,
+        7,5,4,4,6,7,
+        2,3,7,7,6,2,
+        1,0,4,4,5,1
+    };
+
+    unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), vertices, GL_STATIC_DRAW);  
 
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(int), indices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);	
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (float*) NULL);
+    glEnableVertexAttribArray(1);	
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (float*) NULL);
+    glBindVertexArray(0);
+
+    // load transfer function as texture
+    GLuint TfTexture;
+    TfLoader loader("data/transferfunction/transfer_function.dat");
+    TfTexture = loader.tfTexture;
+
+    GLuint RawTexture;
+    // if not 256x256x256, modify parameter in dataloader
+    RawLoader rawloader("data/raw/head_256x256x256_uint8.raw");
+    RawTexture = rawloader.rawTexture;
 
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
@@ -113,21 +99,23 @@ int main() {
         // view matrix
         glm::mat4 view = camera.GetViewMatrix();
         glShader.setMat4("view", view);
-        // set light to shader
-
-        glShader.setVec3("objectColor", glm::vec3(1.0f, 1.0f, 1.0f));
-        glShader.setVec3("lightColor",  glm::vec3(0.5f, 0.3f, 0.3f));
-        glShader.setVec3("lightPos", camera.Position);
-        glShader.setVec3("direction", camera.Front);
-        glShader.setVec3("viewPos", camera.Position);
-        glShader.setFloat("cutOff", glm::cos(glm::radians(12.5f)));
-        glShader.setFloat("outerCutOff", glm::cos(glm::radians(17.5f)));
-        glShader.setMat4("proj", proj);
         
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_1D, TfTexture);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_3D, RawTexture);
+
         //draw
+        // glBindVertexArray(VAO);
+        // glDrawArrays(GL_TRIANGLES, 0, 36);
+        // glBindVertexArray(0);
+
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
+        glDisable(GL_CULL_FACE);
 
         keyboard_callback(window);
         glfwPollEvents();
