@@ -1,6 +1,8 @@
 #version 330 core
 out vec4 FragColor;
 
+in vec3 point;
+
 uniform mat4 ViewMatrix;
 uniform float focal_length;
 uniform float aspect_ratio;
@@ -67,20 +69,12 @@ void main() {
         // ray casting cal rgba
         color.rgb = c.a * c.rgb + (1 - c.a) * color.a * color.rgb;
         color.a = c.a + (1 - c.a) * color.a;
-
         acum_length += step_size;
         position += step_vector;
     }
 
-    color.rgb = color.a * color.rgb + (1 - color.a) * background_colour;
-    color.a = 1.0;
-
-    FragColor = vec4(0.0, 1.0, 1.0, 1.0);
+    // color.xyz = color.a * color.rgb + (1 - color.a) * background_colour;
+    // color.w = 1.0;
     // FragColor = color;
-    // if (color.x > 0.0) {
-    //     FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-    // } else {
-    //     FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    // }
-    // FragColor = vec4()
+    FragColor = vec4(point, 1.0);
 }

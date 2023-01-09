@@ -20,7 +20,7 @@ const float PITCH       =  0.0f;
 const float SPEED       =  2.5f;
 const float SENSITIVITY =  0.1f;
 const float ZOOM        =  45.0f;
-const float KEYSENSITIVITY = 0.01f;
+const float KEYSENSITIVITY = 0.05f;
 
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL

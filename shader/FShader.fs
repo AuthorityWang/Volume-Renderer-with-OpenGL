@@ -1,18 +1,15 @@
 #version 400
-
 in vec3 EntryPoint;
 
-uniform sampler3D RawTexture;
 uniform sampler2D ExitPoints;
-uniform sampler1D TfTexture;
+uniform sampler3D VolumeTex;
+uniform sampler1D TransferFunc;
 uniform float     StepSize;
 uniform vec2      ScreenSize;
 layout (location = 0) out vec4 FragColor;
 
 void main()
 {
-    // ExitPointCoord 的坐标是设备规范化坐标
-    // 出现了和纹理坐标有关的问题。
     vec3 exitPoint = texture(ExitPoints, gl_FragCoord.st/ScreenSize).xyz;
     // that will actually give you clip-space coordinates rather than
     // normalised device coordinates, since you're not performing the perspective
@@ -30,7 +27,6 @@ void main()
     vec3 voxelCoord = EntryPoint;
     vec4 colorAcum = vec4(0.0); // The dest color
     float alphaAcum = 0.0;                // The  dest alpha for blending
-    /* 定义颜色查找的坐标 */
     float intensity;
     float lengthAcum = 0.0;
     vec4 colorSample; // The src color 
@@ -41,10 +37,10 @@ void main()
     for(int i = 0; i < 1600; i++)
     {
     	// 获得体数据中的标量值scaler value
-    	intensity =  texture(RawTexture, voxelCoord).x;
+    	intensity =  texture(VolumeTex, voxelCoord).x;
     	// 查找传输函数中映射后的值
     	// 依赖性纹理读取  
-    	colorSample = texture(TfTexture, intensity);
+    	colorSample = texture(TransferFunc, intensity);
     	// modulate the value of colorSample.a
     	// front-to-back integration
     	if (colorSample.a > 0.0) {
@@ -66,9 +62,8 @@ void main()
     	    break;
     	}
     }
-    // FragColor = colorAcum;
-    // FragColor = vec4(0.0, 1.0, 1.0, 1.0);
+    FragColor = colorAcum;
     // for test
-    FragColor = vec4(EntryPoint, 1.0);
+    // FragColor = vec4(EntryPoint, 1.0);
     // FragColor = vec4(exitPoint, 1.0);
 }

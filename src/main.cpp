@@ -3,13 +3,19 @@
 #include <camera.h>
 #include <functionloader.h>
 #include <dataloader.h>
+#include <CalPoint.h>
 #include <sstream>
 #include <fstream>
 #include <string>
 #include <memory>
-const int WIDTH = 1920;
-const int HEIGHT = 1080;
+const int WIDTH = 800;
+const int HEIGHT = 800;
 const float stepsize = 0.01f;
+GLint Bufferindex;
+GLint TfTexture;
+GLint PosTexture;
+GLint RawTexture;
+unsigned int VAO;
 
 //define a camera
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -26,7 +32,64 @@ glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 GLFWwindow *window;
 
-int main() {
+void display() {
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Shader glShader("shader/VShader.vs", "shader/FShader.fs");
+    Shader glShaderDeBug("shader/shaderDebug.vs", "shader/shaderDebug.fs");
+    glShader.use();
+    // projection matrix
+    glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 800.0f);
+    // model matrix
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, 0.5f));
+    // view matrix
+    glm::mat4 view = camera.GetViewMatrix();
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Bufferindex);
+    glShaderDeBug.use();
+    glShaderDeBug.setMat4("proj", proj);
+    glShaderDeBug.setMat4("model", model);
+    glShaderDeBug.setMat4("view", view);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glUseProgram(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glShader.use();
+    glShader.setMat4("proj", proj);
+    glShader.setMat4("model", model);
+    glShader.setMat4("view", view);
+    glShader.setFloat("StepSize", 0.01f);
+    glShader.setVec2("ScreenSize", vec2(WIDTH, HEIGHT));
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_1D, TfTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, PosTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_3D, RawTexture);
+
+    glShader.setInt("TransferFunc", 0);
+    glShader.setInt("ExitPoints", 1);
+    glShader.setInt("VolumeTex", 2);
+
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glUseProgram(0);
+}
+
+int main(int argc, char** argv) {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -35,7 +98,9 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // init a shader
+    // Shader glShader("shader/vertexShader.vs", "shader/fragmentShader.fs");
     Shader glShader("shader/VShader.vs", "shader/FShader.fs");
+    Shader glShaderDeBug("shader/shaderDebug.vs", "shader/shaderDebug.fs");
 
     // first write a mesh without transfer function and rawdata, just a cube
     float vertices[24] = {
@@ -57,7 +122,7 @@ int main() {
         1,0,4,4,5,1
     };
 
-    unsigned int VAO, VBO, EBO;
+    unsigned int VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -76,73 +141,78 @@ int main() {
     glBindVertexArray(0);
 
     // load transfer function as texture
-    GLuint TfTexture;
+    unsigned int TfTexture;
     TfLoader loader("data/transferfunction/transfer_function.dat");
     TfTexture = loader.tfTexture;
 
-    GLuint RawTexture;
+    unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
     RawLoader rawloader("data/raw/head_256x256x256_uint8.raw");
     RawTexture = rawloader.rawTexture;
 
-    GLuint BackTexture;
-    glGenTextures(1, &BackTexture);
-    glBindTexture(GL_TEXTURE_2D, BackTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+    GLuint PosTexture, Bufferindex;
+    PointGenerate raypos(WIDTH, HEIGHT);
+    PosTexture = raypos.PointTexture;
+    Bufferindex = raypos.Buffer;
 
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // use shader before setting any attribution to shader
+
         glShader.use();
-        
         // projection matrix
         glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 800.0f);
-        glShader.setMat4("proj", proj);
         // model matrix
         glm::mat4 model = glm::mat4(1.0f);
-        glShader.setMat4("model", model);
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, 0.5f));
         // view matrix
         glm::mat4 view = camera.GetViewMatrix();
-        glShader.setMat4("view", view);
 
-        // glShader.setMat4("ViewMatrix", view);
-        // glShader.setFloat("focal_length", 5.0f);
-        // glShader.setFloat("aspect_ratio", (float)WIDTH / (float)HEIGHT);
-        // glShader.setVec2("viewport_size", vec2(1.0, 1.0));
-        // glShader.setVec3("ray_origin", vec3(0.5, 0.5, 5.0));
-        // glShader.setVec3("upp_bnd", vec3(1.0, 1.0, 1.0));
-        // glShader.setVec3("low_bnd", vec3(0.0, 0.0, 0.0));
-        // glShader.setVec3("background_colour", vec3(1.0f, 1.0f, 1.0f));
-        // glShader.setFloat("step_size", 0.01f);
-        glShader.setFloat("StepSize", stepsize);
-        glShader.setVec2("ScreenSize", vec2(WIDTH, HEIGHT));
+        glBindFramebuffer(GL_FRAMEBUFFER, Bufferindex);
+        glEnable(GL_DEPTH_TEST);
+        glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glShaderDeBug.use();
+        glShaderDeBug.setMat4("proj", proj);
+        glShaderDeBug.setMat4("model", model);
+        glShaderDeBug.setMat4("view", view);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
+        glBindVertexArray(0);
+        glDisable(GL_CULL_FACE);
+        glUseProgram(0);
+
         
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glShader.use();
+        glShader.setMat4("proj", proj);
+        glShader.setMat4("model", model);
+        glShader.setMat4("view", view);
+        glShader.setFloat("StepSize", 0.01f);
+        glShader.setVec2("ScreenSize", vec2(WIDTH, HEIGHT));
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_1D, TfTexture);
-
         glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, PosTexture);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, RawTexture);
 
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, BackTexture);
+        glShader.setInt("TransferFunc", 0);
+        glShader.setInt("ExitPoints", 1);
+        glShader.setInt("VolumeTex", 2);
 
-        glShader.setInt("TfTexture", TfTexture);
-        glShader.setInt("RawTexture", RawTexture);
-        glShader.setInt("ExitPoints", BackTexture);
-
-        // only draw the front visible faces to faster
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
         glBindVertexArray(0);
         glDisable(GL_CULL_FACE);
-
+        glUseProgram(0);
         keyboard_callback(window);
         glfwPollEvents();
         glfwSwapBuffers(window);
