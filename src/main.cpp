@@ -9,6 +9,7 @@
 #include <memory>
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
+const float stepsize = 0.01f;
 
 //define a camera
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -28,13 +29,13 @@ GLFWwindow *window;
 int main() {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    // glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glEnable(GL_DEPTH_TEST);
 
     // init a shader
-    Shader glShader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
+    Shader glShader("shader/VShader.vs", "shader/FShader.fs");
 
     // first write a mesh without transfer function and rawdata, just a cube
     float vertices[24] = {
@@ -84,6 +85,15 @@ int main() {
     RawLoader rawloader("data/raw/head_256x256x256_uint8.raw");
     RawTexture = rawloader.rawTexture;
 
+    GLuint BackTexture;
+    glGenTextures(1, &BackTexture);
+    glBindTexture(GL_TEXTURE_2D, BackTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
     while (!glfwWindowShouldClose(window)) {
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -91,7 +101,7 @@ int main() {
         glShader.use();
         
         // projection matrix
-        glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 100.0f);
+        glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 800.0f);
         glShader.setMat4("proj", proj);
         // model matrix
         glm::mat4 model = glm::mat4(1.0f);
@@ -100,15 +110,17 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glShader.setMat4("view", view);
 
-        glShader.setMat4("ViewMatrix", view);
-        glShader.setFloat("focal_length", 5.0f);
-        glShader.setFloat("aspect_ratio", (float)WIDTH / (float)HEIGHT);
-        glShader.setVec2("viewport_size", vec2(1.0, 1.0));
-        glShader.setVec3("ray_origin", vec3(0.5, 0.5, 5.0));
-        glShader.setVec3("upp_bnd", vec3(1.0, 1.0, 1.0));
-        glShader.setVec3("low_bnd", vec3(0.0, 0.0, 0.0));
-        glShader.setVec3("background_colour", vec3(1.0f, 1.0f, 1.0f));
-        glShader.setFloat("step_size", 0.001);
+        // glShader.setMat4("ViewMatrix", view);
+        // glShader.setFloat("focal_length", 5.0f);
+        // glShader.setFloat("aspect_ratio", (float)WIDTH / (float)HEIGHT);
+        // glShader.setVec2("viewport_size", vec2(1.0, 1.0));
+        // glShader.setVec3("ray_origin", vec3(0.5, 0.5, 5.0));
+        // glShader.setVec3("upp_bnd", vec3(1.0, 1.0, 1.0));
+        // glShader.setVec3("low_bnd", vec3(0.0, 0.0, 0.0));
+        // glShader.setVec3("background_colour", vec3(1.0f, 1.0f, 1.0f));
+        // glShader.setFloat("step_size", 0.01f);
+        glShader.setFloat("StepSize", stepsize);
+        glShader.setVec2("ScreenSize", vec2(WIDTH, HEIGHT));
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_1D, TfTexture);
@@ -116,14 +128,19 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_3D, RawTexture);
 
-        glShader.setInt("TranFunc", 0);
-        glShader.setInt("volume", 1);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, BackTexture);
+
+        glShader.setInt("TfTexture", TfTexture);
+        glShader.setInt("RawTexture", RawTexture);
+        glShader.setInt("ExitPoints", BackTexture);
 
         // only draw the front visible faces to faster
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
+        glBindVertexArray(0);
         glDisable(GL_CULL_FACE);
 
         keyboard_callback(window);

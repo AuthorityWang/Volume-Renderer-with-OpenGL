@@ -50,6 +50,12 @@ void Shader::initWithCode(const std::string &vs, const std::string &fs, const st
   //create a shader program and link it to vshader and fshader
   //after linked, deleted vshader and fshader for it is no use
   id = glCreateProgram();
+
+
+  // Bind index 0 to the shader input variable "VerPos"
+  glBindAttribLocation(id, 0, "VerPos");
+  // Bind index 1 to the shader input variable "VerClr"
+  glBindAttribLocation(id, 1, "VerClr");
   glAttachShader(id, vertexShader);
   glAttachShader(id, fragmentShader);
   if (gs != "") {
