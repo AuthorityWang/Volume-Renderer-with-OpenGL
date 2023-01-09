@@ -8,9 +8,9 @@
 #include <fstream>
 #include <string>
 #include <memory>
-const int WIDTH = 800;
-const int HEIGHT = 800;
-const float stepsize = 0.01f;
+const int WIDTH = 1920;
+const int HEIGHT = 1080;
+const float stepsize = 0.001f;
 GLint Bufferindex;
 GLint TfTexture;
 GLint PosTexture;
@@ -27,8 +27,6 @@ Camera camera(glm::vec3(0.5f, 0.5f, 5.0f));
 float lastX = WIDTH / 2.0f;
 float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
-// position of the light source
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 GLFWwindow *window;
 
@@ -89,7 +87,7 @@ void display() {
     glUseProgram(0);
 }
 
-int main(int argc, char** argv) {
+int main() {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -147,7 +145,7 @@ int main(int argc, char** argv) {
 
     unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
-    RawLoader rawloader("data/raw/head_256x256x256_uint8.raw");
+    RawLoader rawloader("C:\\Users\\wangquan\\Desktop\\workspace\\CS171-project_opengl\\data\\raw\\skull_256x256x256_uint8.raw");
     RawTexture = rawloader.rawTexture;
 
     GLuint PosTexture, Bufferindex;
@@ -164,7 +162,6 @@ int main(int argc, char** argv) {
         glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 800.0f);
         // model matrix
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, 0.5f));
         // view matrix
         glm::mat4 view = camera.GetViewMatrix();
 

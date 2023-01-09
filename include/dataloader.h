@@ -11,6 +11,6 @@
 class RawLoader {
 public:
     GLuint rawTexture;
-    RawLoader(std::string path, int x = 256, int y = 256, int z = 256);
+    RawLoader(std::string path, int x = 256, int y = 256, int z = 256, int datatype = 1);
 };
 #endif
