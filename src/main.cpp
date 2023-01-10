@@ -92,6 +92,50 @@ void display() {
     glDisable(GL_CULL_FACE);
     glUseProgram(0);
 }
+/*
+void showFPS(GLFWwindow *pWindow)
+{
+    // Measure speed
+     double currentTime = glfwGetTime();
+     double delta = currentTime - lastTime;
+     nbFrames++;
+     if ( delta >= 1.0 ){ // If last cout was more than 1 sec ago
+         cout << 1000.0/double(nbFrames) << endl;
+
+         double fps = double(nbFrames) / delta;
+
+         std::stringstream ss;
+         ss << GAME_NAME << " " << VERSION << " [" << fps << " FPS]";
+
+         glfwSetWindowTitle(pWindow, ss.str().c_str());
+
+         nbFrames = 0;
+         lastTime = currentTime;
+     }
+}*/
+double lastTime;
+int nbFrames;
+void setWindowFPS (GLFWwindow* win)
+{
+  // Measure speed
+  double currentTime = glfwGetTime ();
+  nbFrames++;
+
+  if ( currentTime - lastTime >= 1.0 ){ // If last cout was more than 1 sec ago
+    char title [256];
+    title [255] = '\0';
+
+    snprintf ( title, 255,
+                 "%s %s - [FPS: %3.2f]",
+                   "111", "222", 1000.0f / (float)nbFrames );
+
+    glfwSetWindowTitle (win, title);
+
+    nbFrames = 0;
+    lastTime += 1.0;
+  }
+}
+
 
 int main() {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
@@ -157,7 +201,13 @@ int main() {
 
     unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
-    RawLoader rawloader("../../data/raw/head_256x256x256_uint8.raw", 256, 256, 256, 1);
+
+    RawLoader rawloader("../../data/raw/bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
+    // RawLoader rawloader("../../data/raw/head_256x256x256_uint8.raw", 256, 256, 256, 1);
+    // RawLoader rawloader("../../data/raw/neghip_64x64x64_uint8.raw", 64, 64, 64, 1);
+    // RawLoader rawloader("../../data/raw/skull_256x256x256_uint8.raw", 256, 256, 256, 1);
+    // RawLoader rawloader("../../data/raw/tooth_103x94x161_uint8.raw", 103, 94, 161, 1);
+    
     RawTexture = rawloader.rawTexture;
 
     GLuint PosTexture, Bufferindex;
