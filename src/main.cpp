@@ -12,7 +12,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "Windows.h"
-#include <chrono>
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -113,10 +112,10 @@ int main() {
     PointGenerate raypos(WIDTH, HEIGHT);
     PosTexture = raypos.PointTexture;
     Bufferindex = raypos.Buffer;
-    float currenttime = GetTickCount();
-    float lasttime = GetTickCount();
+
+    long long frames = 0;
     while (!glfwWindowShouldClose(window)) {
-        float currenttime = GetTickCount();
+        frames++;
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -176,8 +175,18 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        lasttime = GetTickCount();
-        fps = 1.F / ((currenttime - lasttime) * 100000);
+
+        static float framesPerSecond = 0.0f;       // This will store our fps
+        static float lastTime = 0.0f;       // This will hold the time from the last frame
+        float currentTime = GetTickCount() * 0.001f;    
+        ++framesPerSecond;
+        if( currentTime - lastTime > 1.0f )
+        {
+            lastTime = currentTime;
+            fps = framesPerSecond;
+            framesPerSecond = 0;
+        }
+
         ImGui::Begin("Frame Per Second");
         ImGui::Text("%f FPS", fps);
         ImGui::End();
