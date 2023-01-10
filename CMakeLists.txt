@@ -15,6 +15,11 @@ list(APPEND LIBRARIES glfw ${glfw_LIBRARIES})
 set(GLAD_INCLUDE libs/glad/include)
 include_directories(${GLAD_INCLUDE})
 
+file(GLOB SRC
+  ${PROJECT_SOURCE_DIR}/libs/imgui/*.h
+  ${PROJECT_SOURCE_DIR}/libs/imgui/*.cpp
+)
+
 # glm
 add_subdirectory(libs/glm)
 list(APPEND LIBRARIES glm::glm)
@@ -30,9 +35,9 @@ endif()
 # set source files and add executable
 file(GLOB SRC_FILES src/*.cpp)
 
-add_executable(main ${SRC_FILES} ${INTERNAL_SRC_FILES} src/glad.c)
+add_executable(main ${SRC} ${SRC_FILES} ${INTERNAL_SRC_FILES}  src/glad.c)
 target_include_directories(main PRIVATE include)
 target_compile_features(main PRIVATE cxx_std_17)
 target_compile_definitions(main PRIVATE ${DEFINES})
 target_link_libraries(main PRIVATE ${LIBRARIES})
-target_link_directories(main PUBLIC glut32.lib)
+include_directories(${PROJECT_SOURCE_DIR}/libs/imgui)

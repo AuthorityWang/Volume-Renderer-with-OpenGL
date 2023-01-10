@@ -11,42 +11,27 @@ layout (location = 0) out vec4 FragColor;
 void main()
 {
     vec3 exitPoint = texture(ExitPoints, gl_FragCoord.st/ScreenSize).xyz;
-    if (EntryPoint == exitPoint)
-    	discard;
-    vec3 dir = exitPoint - EntryPoint;
-    float len = length(dir);
-    vec3 deltaDir = normalize(dir) * StepSize;
-    float deltaDirLen = length(deltaDir);
-    vec3 voxelCoord = EntryPoint;
-    vec4 colorAcum = vec4(0.0);
-    float alphaAcum = 0.0;
-    float intensity;
-    float lengthAcum = 0.0;
-    vec4 colorSample;
-    float alphaSample;
-    vec4 bgColor = vec4(1.0, 1.0, 1.0, 0.0);
- 
-    for(int i = 0; i < 1600; i++)
-    {
-    	intensity =  texture(VolumeTex, voxelCoord).x;
-    	colorSample = texture(TransferFunc, intensity);
-    	if (colorSample.a > 0.0) {
-    	    colorSample.a = 1.0 - pow(1.0 - colorSample.a, StepSize*200.0f);
-    	    colorAcum.rgb += (1.0 - colorAcum.a) * colorSample.rgb * colorSample.a;
-    	    colorAcum.a += (1.0 - colorAcum.a) * colorSample.a;
-    	}
-    	voxelCoord += deltaDir;
-    	lengthAcum += deltaDirLen;
-    	if (lengthAcum >= len )
-    	{	
-    	    colorAcum.rgb = colorAcum.rgb*colorAcum.a + (1 - colorAcum.a)*bgColor.rgb;		
-    	    break;	
-    	}	
-    	else if (colorAcum.a > 1.0)
-    	{
-    	    colorAcum.a = 1.0;
-    	    break;
-    	}
+
+	vec3 ray = exitPoint - EntryPoint;
+
+    float ray_length = length(ray);
+    vec3 step_vector = StepSize * (ray / ray_length);
+
+    vec3 position = EntryPoint;
+    vec4 color = vec4(0.0);
+
+    float acum_length = 0.0;
+    while (acum_length <= ray_length && color.a < 1.0) {
+        float intensity = texture(VolumeTex, position).r;
+        vec4 c = texture(TransferFunc, intensity);
+        // ray casting cal rgba
+        color.rgb = c.a * c.rgb + (1 - c.a) * color.a * color.rgb;
+        color.a = c.a + (1 - c.a) * color.a;
+        acum_length += StepSize;
+        position += step_vector;
     }
-    FragColor = colorAcum;
+
+    color.xyz = color.a * color.rgb + (1 - color.a) * vec3(1.0);
+    color.w = 1.0;
+    FragColor = color;
 }

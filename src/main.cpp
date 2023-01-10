@@ -8,6 +8,11 @@
 #include <fstream>
 #include <string>
 #include <memory>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "Windows.h"
+
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
 const float stepsize = 0.001f;
@@ -16,6 +21,7 @@ GLint TfTexture;
 GLint PosTexture;
 GLint RawTexture;
 unsigned int VAO;
+float fps = 0.0f;
 
 //define a camera
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -93,6 +99,12 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwMakeContextCurrent(window);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 400");
     glEnable(GL_DEPTH_TEST);
 
     // init a shader
@@ -145,15 +157,17 @@ int main() {
 
     unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
-    RawLoader rawloader("../../data/raw/bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
+    RawLoader rawloader("../../data/raw/head_256x256x256_uint8.raw", 256, 256, 256, 1);
     RawTexture = rawloader.rawTexture;
 
     GLuint PosTexture, Bufferindex;
     PointGenerate raypos(WIDTH, HEIGHT);
     PosTexture = raypos.PointTexture;
     Bufferindex = raypos.Buffer;
-
+    float currenttime = GetTickCount();
+    float lasttime = GetTickCount();
     while (!glfwWindowShouldClose(window)) {
+        float currenttime = GetTickCount();
         glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -210,6 +224,16 @@ int main() {
         glBindVertexArray(0);
         glDisable(GL_CULL_FACE);
         glUseProgram(0);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        lasttime = GetTickCount();
+        fps = 1.F / ((currenttime - lasttime) * 100000);
+        ImGui::Begin("Frame Per Second");
+        ImGui::Text("%f FPS", fps);
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         keyboard_callback(window);
         glfwPollEvents();
         glfwSwapBuffers(window);
