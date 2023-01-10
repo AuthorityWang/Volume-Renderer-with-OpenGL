@@ -11,6 +11,8 @@ group20
 
 周守琛 2021533042
 
+To execute the project, just need to build the project and run it. Using Visual Studio 2019 (MSVC) to build to avoid any problem. 
 
+Interaction: use keyboard WASD, Space, C to move the camera in 6 axis. 
 
-To execute the project, just need to build the project and run it.
+The Camera direction will follow the mouse. 
