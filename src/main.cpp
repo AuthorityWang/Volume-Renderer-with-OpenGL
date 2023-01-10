@@ -99,7 +99,6 @@ int main() {
     TfTexture = loader.tfTexture;
 
     unsigned int RawTexture;
-    // if not 256x256x256, modify parameter in dataloader
     RawLoader rawloader("../../data/raw/bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
     // RawLoader rawloader("../../data/raw/head_256x256x256_uint8.raw", 256, 256, 256, 1);
     // RawLoader rawloader("../../data/raw/neghip_64x64x64_uint8.raw", 64, 64, 64, 1);
@@ -161,9 +160,9 @@ int main() {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_3D, RawTexture);
 
-        glShader.setInt("TransferFunc", 0);
-        glShader.setInt("ExitPoints", 1);
-        glShader.setInt("VolumeTex", 2);
+        glShader.setInt("TfFunc", 0);
+        glShader.setInt("Depth", 1);
+        glShader.setInt("RawData", 2);
 
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
