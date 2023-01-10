@@ -12,6 +12,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "Windows.h"
+#include <chrono>
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -35,107 +36,6 @@ float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
 
 GLFWwindow *window;
-
-void display() {
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Shader glShader("shader/VShader.vs", "shader/FShader.fs");
-    Shader glShaderDeBug("shader/shaderDebug.vs", "shader/shaderDebug.fs");
-    glShader.use();
-    // projection matrix
-    glm::mat4 proj = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH/(float)HEIGHT, 0.1f, 800.0f);
-    // model matrix
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 0.5f, 0.5f));
-    // view matrix
-    glm::mat4 view = camera.GetViewMatrix();
-
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Bufferindex);
-    glShaderDeBug.use();
-    glShaderDeBug.setMat4("proj", proj);
-    glShaderDeBug.setMat4("model", model);
-    glShaderDeBug.setMat4("view", view);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
-    glBindVertexArray(0);
-    glDisable(GL_CULL_FACE);
-    glUseProgram(0);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glShader.use();
-    glShader.setMat4("proj", proj);
-    glShader.setMat4("model", model);
-    glShader.setMat4("view", view);
-    glShader.setFloat("StepSize", 0.01f);
-    glShader.setVec2("ScreenSize", vec2(WIDTH, HEIGHT));
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_1D, TfTexture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, PosTexture);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_3D, RawTexture);
-
-    glShader.setInt("TransferFunc", 0);
-    glShader.setInt("ExitPoints", 1);
-    glShader.setInt("VolumeTex", 2);
-
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, (GLuint *)NULL);
-    glBindVertexArray(0);
-    glDisable(GL_CULL_FACE);
-    glUseProgram(0);
-}
-/*
-void showFPS(GLFWwindow *pWindow)
-{
-    // Measure speed
-     double currentTime = glfwGetTime();
-     double delta = currentTime - lastTime;
-     nbFrames++;
-     if ( delta >= 1.0 ){ // If last cout was more than 1 sec ago
-         cout << 1000.0/double(nbFrames) << endl;
-
-         double fps = double(nbFrames) / delta;
-
-         std::stringstream ss;
-         ss << GAME_NAME << " " << VERSION << " [" << fps << " FPS]";
-
-         glfwSetWindowTitle(pWindow, ss.str().c_str());
-
-         nbFrames = 0;
-         lastTime = currentTime;
-     }
-}*/
-double lastTime;
-int nbFrames;
-void setWindowFPS (GLFWwindow* win)
-{
-  // Measure speed
-  double currentTime = glfwGetTime ();
-  nbFrames++;
-
-  if ( currentTime - lastTime >= 1.0 ){ // If last cout was more than 1 sec ago
-    char title [256];
-    title [255] = '\0';
-
-    snprintf ( title, 255,
-                 "%s %s - [FPS: %3.2f]",
-                   "111", "222", 1000.0f / (float)nbFrames );
-
-    glfwSetWindowTitle (win, title);
-
-    nbFrames = 0;
-    lastTime += 1.0;
-  }
-}
-
 
 int main() {
     WindowGuard windowGuard(window, WIDTH, HEIGHT, "CS171 project");
@@ -201,7 +101,6 @@ int main() {
 
     unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
-
     RawLoader rawloader("../../data/raw/bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
     // RawLoader rawloader("../../data/raw/head_256x256x256_uint8.raw", 256, 256, 256, 1);
     // RawLoader rawloader("../../data/raw/neghip_64x64x64_uint8.raw", 64, 64, 64, 1);
