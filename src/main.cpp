@@ -145,7 +145,7 @@ int main() {
 
     unsigned int RawTexture;
     // if not 256x256x256, modify parameter in dataloader
-    RawLoader rawloader("C:\\Users\\wangquan\\Desktop\\workspace\\CS171-project_opengl\\data\\raw\\bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
+    RawLoader rawloader("../../data/raw/bonsai_256x256x256_uint8.raw", 256, 256, 256, 1);
     RawTexture = rawloader.rawTexture;
 
     GLuint PosTexture, Bufferindex;
