@@ -13,8 +13,8 @@
 #include "imgui_impl_opengl3.h"
 #include "Windows.h"
 
-const int WIDTH = 1920;
-const int HEIGHT = 1080;
+const int WIDTH = 800;
+const int HEIGHT = 800;
 const float stepsize = 0.001f;
 GLint Bufferindex;
 GLint TfTexture;
@@ -185,6 +185,8 @@ int main() {
             fps = framesPerSecond;
             framesPerSecond = 0;
         }
+
+        ImGui::SetNextWindowSize(ImVec2(180, 50));
 
         ImGui::Begin("Frame Per Second");
         ImGui::Text("%f FPS", fps);

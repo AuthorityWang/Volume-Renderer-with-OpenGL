@@ -1,20 +1,20 @@
-# cs171project_opengl
-SHTU cs171 final project
+# Volume Renderer using opengl
+SHTU CS171 final project
 
-### team:
+A volume renderer using opengl, raycasting implemented with glsl.
 
-group20
+![volume_render](Volume_renderer.jpg)
 
-### author:
+Support for .raw data, under ./data/raw.
 
-王鹏豪 2021533138
+Transfer function in ./data/transferfunction, you can also implement your own transfer function.
 
-周守琛 2021533042
+Recommended using Visual Studio (MSVC) to build this project.
 
-To execute the project, just need to build the project and run it. Using Visual Studio 2019 (MSVC) to build to avoid any problem. 
-
-Interaction: use keyboard WASD, Space, C to move the camera in 6 axis. 
+Interaction: Use keyboard WASD, Space, C to move the camera in 6 axis. 
 
 The Camera direction will follow the mouse. 
 
 All .raw data come from [https://klacansky.com/open-scivis-datasets/](https://klacansky.com/open-scivis-datasets/)
+
+Note that the fps will be affected by v-sync, set `glfwSwapInterval(1);` in [utils.cpp](src/utils.cpp) to zero to turn off v-sync if you want to test the extreme speed of this renderer
